@@ -7,6 +7,8 @@ exports.handler = async () => {
 	dotenv.config();
 	const username = process.env.USERNAME;
 	const password = process.env.PASSWORD;
+	const fromAddress = process.env.FROM_ADDRESS;
+	const toAddress = process.env.TO_ADDRESS;
 
 	const date = new Date();
 	const locationArray = [];
@@ -52,7 +54,7 @@ exports.handler = async () => {
 
 		const params = {
 			Destination: {
-				ToAddresses: ['hunterkylebertoson@gmail.com'],
+				ToAddresses: [toAddress],
 			},
 			Message: {
 				Body: {
@@ -60,7 +62,7 @@ exports.handler = async () => {
 				},
 				Subject: {Data: `Attendance Report for ${formattedDate}`},
 			},
-			Source: 'hunterkylebertoson@gmail.com',
+			Source: fromAddress,
 		};
 		return ses.sendEmail(params).promise();
 	} catch (error) {
