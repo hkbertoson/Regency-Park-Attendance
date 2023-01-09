@@ -1,5 +1,7 @@
 const aws = require('aws-sdk');
 const ses = new aws.SES({region: 'us-east-1'});
+const sundaySchoolTimes = ['08:30', '09:30'];
+const mainChurchTimes = ['09:31', '10:30'];
 
 exports.handler = async () => {
 	const dotenv = require('dotenv');
@@ -11,46 +13,69 @@ exports.handler = async () => {
 	const toAddress = process.env.TO_ADDRESS;
 
 	const date = new Date();
+	date.setDate(date.getDate() - 1);
+
 	const locationArray = [];
-	let relationships;
+	const timeArray = [];
+
 	const formattedDateForApiCall = date.toISOString().slice(0, 10);
-	let month = ('0' + (date.getMonth() + 1)).slice(-2);
-	let day = ('0' + date.getDate()).slice(-2);
-	let year = date.getFullYear();
-	const formattedDate = `${month}/${day}/${year}`;
+
+	const formattedDate = date.toLocaleDateString();
+
 	const url = `https://api.planningcenteronline.com/check-ins/v2/check_ins?include=locations&where[created_at]=${formattedDateForApiCall}`;
 
+	const checkRolandCenter = (ID) => {
+		return ID == '947126';
+	};
+
+	const checkKinderChurch = (ID) => {
+		return ID == '947241';
+	};
+
+	const checkNursery = (ID) => {
+		return ID == '947131';
+	};
+
 	try {
-		const res = await axios.get(url, {
+		const response = await axios.get(url, {
 			auth: {
 				username: username,
 				password: password,
 			},
 		});
-		const data = res.data.data;
+		const data = response.data.data;
 
 		data.map((item) => {
-			relationships = item.relationships.locations.data;
-			relationships.map((locationID) => {
-				locationArray.push(locationID.id);
+			({
+				relationships: {
+					locations: {
+						data: [{id: location_id}],
+					},
+				},
+				attributes: {created_at},
+			} = item);
+
+			created_at = new Date(created_at);
+			created_at = created_at.toLocaleTimeString([], {
+				hour12: false,
 			});
+			timeArray.push(created_at);
+			locationArray.push(location_id);
 		});
 
-		const checkRolandCenter = (ID) => {
-			return ID == '947126';
-		};
-		const checkKinderChurch = (ID) => {
-			return ID == '947241';
-		};
-
-		const checkNursery = (ID) => {
-			return ID == '947131';
-		};
 		const rolandCenter = locationArray.filter(checkRolandCenter);
 		const kinderChurch = locationArray.filter(checkKinderChurch);
 		const nursery = locationArray.filter(checkNursery);
+		const sundayCountTime = timeArray.filter(checkSundaySchoolTime);
+		const mainChurchCountTime = timeArray.filter(checkMainChurchTime);
 
-		const formattedString = `Total Attendance for ${formattedDateForApiCall} is Roland Center: ${rolandCenter.length} , Kinder Church: ${kinderChurch.length} , Nursery: ${nursery.length}`;
+		const formattedString = `
+		Total Attendance for ${formattedDate} 
+		Roland Center: ${rolandCenter.length}
+		Kinder Church: ${kinderChurch.length}
+		Nursery: ${nursery.length} 
+		Total Count for Sunday School: ${sundayCountTime.length} 
+		Total Count for 10:10 Service: ${mainChurchCountTime.length}`;
 
 		const params = {
 			Destination: {
@@ -73,3 +98,11 @@ exports.handler = async () => {
 		};
 	}
 };
+
+function checkSundaySchoolTime(value) {
+	return value >= sundaySchoolTimes[0] && value <= sundaySchoolTimes[1];
+}
+
+function checkMainChurchTime(value) {
+	return value >= mainChurchTimes[0] && value <= mainChurchTimes[1];
+}
