@@ -1,6 +1,7 @@
 const aws = require('aws-sdk');
 const ses = new aws.SES({region: 'us-east-1'});
 const sundaySchoolTimes = ['08:30', '09:30'];
+const wednesdayNightTimes = ['03:30', '06:45'];
 const mainChurchTimes = ['09:31', '10:30'];
 
 exports.handler = async () => {
@@ -68,6 +69,7 @@ exports.handler = async () => {
 		const nursery = locationArray.filter(checkNursery);
 		const sundayCountTime = timeArray.filter(checkSundaySchoolTime);
 		const mainChurchCountTime = timeArray.filter(checkMainChurchTime);
+		const wednesdayNightTime = timeArray.filter(checkWednesdayNightTime);
 
 		const formattedString = `
 		Total Attendance for ${formattedDate} 
@@ -75,7 +77,8 @@ exports.handler = async () => {
 		Kinder Church: ${kinderChurch.length}
 		Nursery: ${nursery.length} 
 		Total Count for Sunday School: ${sundayCountTime.length} 
-		Total Count for 10:10 Service: ${mainChurchCountTime.length}`;
+		Total Count for 10:10 Service: ${mainChurchCountTime.length}
+		Total Count for Wednesday night Service: ${wednesdayNightTime.length}`;
 
 		const params = {
 			Destination: {
@@ -105,4 +108,8 @@ function checkSundaySchoolTime(value) {
 
 function checkMainChurchTime(value) {
 	return value >= mainChurchTimes[0] && value <= mainChurchTimes[1];
+}
+
+function checkWednesdayNightTime(value) {
+	return value >= wednesdayNightTimes[0] && value <= wednesdayNightTimes[1];
 }
