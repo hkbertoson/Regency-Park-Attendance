@@ -1,7 +1,8 @@
 const aws = require('aws-sdk');
+const date = require('date-and-time');
 const ses = new aws.SES({region: 'us-east-1'});
 const sundaySchoolTimes = ['08:30', '09:30'];
-const wednesdayNightTimes = ['03:30', '06:45'];
+const wednesdayNightTimes = ['09:00', '13:45'];
 const mainChurchTimes = ['09:31', '10:30'];
 
 exports.handler = async () => {
@@ -13,17 +14,14 @@ exports.handler = async () => {
 	const fromAddress = process.env.FROM_ADDRESS;
 	const toAddress = process.env.TO_ADDRESS;
 
-	const date = new Date();
-	date.setDate(date.getDate() - 1);
+	const now = new Date();
+	const yesterday = date.addDays(now, -1);
+	const formattedDate = date.format(yesterday, 'YYYY-MM-DD');
 
 	const locationArray = [];
 	const timeArray = [];
 
-	const formattedDateForApiCall = date.toISOString().slice(0, 10);
-
-	const formattedDate = date.toLocaleDateString();
-
-	const url = `https://api.planningcenteronline.com/check-ins/v2/check_ins?include=locations&where[created_at]=${formattedDateForApiCall}`;
+	const url = `https://api.planningcenteronline.com/check-ins/v2/check_ins?include=locations&where[created_at]=${formattedDate}`;
 
 	const checkRolandCenter = (ID) => {
 		return ID == '947126';
@@ -57,9 +55,7 @@ exports.handler = async () => {
 			} = item);
 
 			created_at = new Date(created_at);
-			created_at = created_at.toLocaleTimeString([], {
-				hour12: false,
-			});
+			created_at = date.format(created_at, 'hh:mm', true);
 			timeArray.push(created_at);
 			locationArray.push(location_id);
 		});
@@ -72,17 +68,20 @@ exports.handler = async () => {
 		const wednesdayNightTime = timeArray.filter(checkWednesdayNightTime);
 
 		const formattedString = `
-		Total Attendance for ${formattedDate} 
+		Total Attendance for ${formattedDate}
 		Roland Center: ${rolandCenter.length}
 		Kinder Church: ${kinderChurch.length}
-		Nursery: ${nursery.length} 
-		Total Count for Sunday School: ${sundayCountTime.length} 
+		Nursery: ${nursery.length}
+		Total Count for Sunday School: ${sundayCountTime.length}
 		Total Count for 10:10 Service: ${mainChurchCountTime.length}
 		Total Count for Wednesday night Service: ${wednesdayNightTime.length}`;
 
 		const params = {
 			Destination: {
-				ToAddresses: [toAddress],
+				ToAddresses: [
+					'hunterkylebertoson@gmail.com',
+					'brianna@regencypark.org',
+				],
 			},
 			Message: {
 				Body: {

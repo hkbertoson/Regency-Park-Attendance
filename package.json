@@ -12,6 +12,7 @@
 	"dependencies": {
 		"aws-sdk": "^2.1282.0",
 		"axios": "^1.2.1",
+		"date-and-time": "^2.4.2",
 		"dotenv": "^16.0.3"
 	}
 }
