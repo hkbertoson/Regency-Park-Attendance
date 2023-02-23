@@ -3,9 +3,9 @@ const date = require('date-and-time');
 const axios = require('axios');
 const dotenv = require('dotenv');
 const ses = new aws.SES({region: 'us-east-1'});
-const sundaySchoolTimes = ['02:30', '03:30'];
+const sundaySchoolTimes = ['02:00', '03:30'];
 const mainChurchTimes = ['03:31', '04:30'];
-const wednesdayNightTimes = ['09:31', '10:30'];
+const wednesdayNightTimes = ['09:00', '23:59'];
 
 exports.handler = async () => {
 	dotenv.config();
@@ -75,7 +75,7 @@ exports.handler = async () => {
 				},
 				Subject: {Data: `Attendance Report for ${formattedDate}`},
 			},
-			Source: 'hunterkylebertoson@gmail.com',
+			Source: 'dev@hunterbertoson.tech',
 		};
 		return ses.sendEmail(params).promise();
 	} catch (error) {
